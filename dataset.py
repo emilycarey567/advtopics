@@ -13,7 +13,6 @@ def rgb_to_yuv(img_tensor):
 class PilotNetDataset(Dataset):
     def __init__(self, root_dir, csv_path, max_angle_rad=None,
                  crop=(0,0,0,0), resize=(66,200), augment=True):
-        # 👇 Use the folder containing labels.csv as the root
         self.root = os.path.dirname(csv_path)
 
         self.items = []
@@ -33,12 +32,10 @@ class PilotNetDataset(Dataset):
 
     def __getitem__(self, idx):
         img_rel, y = self.items[idx]
-        # 👇 This now resolves to: dataset/clear_xxx/images/img_000000.png
         path = os.path.join(self.root, img_rel)
 
         pil = Image.open(path).convert("RGB")
 
-        # Crop sky/hood if wanted
         t,b,l,r = self.crop
         if any((t,b,l,r)):
             W,H = pil.size
