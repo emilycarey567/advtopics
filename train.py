@@ -18,7 +18,7 @@ def main():
     n_val = max(1000, int(0.1*len(ds)))
     train_ds, val_ds = random_split(ds, [len(ds)-n_val, n_val])
 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=0)  # 👈 set to 0 for Windows
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=0)  
     val_loader   = DataLoader(val_ds, batch_size=batch_size, num_workers=0)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
