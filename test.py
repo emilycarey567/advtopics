@@ -3,46 +3,78 @@ from torch.utils.data import DataLoader
 from models import PilotNet, PilotNetSwish, ResNetPilot, VGGPilot
 from dataset import PilotNetDataset
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 def evaluate_model(model_class, weight_path, test_csv, root="dataset", batch_size=64):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # ----- Load model -----
     model = model_class().to(device)
     model.load_state_dict(torch.load(weight_path, map_location=device))
     model.eval()
 
-    ds = PilotNetDataset(root, test_csv, max_angle_rad=0.6, crop=(20,8,0,0), resize=(66,200), augment=False)
+    # ----- Load dataset -----
+    ds = PilotNetDataset(root, test_csv,
+                         max_angle_rad=0.6,
+                         crop=(20, 8, 0, 0),
+                         resize=(66, 200),
+                         augment=False)
     loader = DataLoader(ds, batch_size=batch_size, shuffle=False)
 
-    loss_fn = torch.nn.HuberLoss(delta=1.0)
-    total_loss = 0
+    # ----- Metrics -----
+    huber_fn = torch.nn.HuberLoss(delta=1.0)
+    total_huber = 0
     preds, targets = [], []
 
     with torch.no_grad():
         for x, y in loader:
             x, y = x.to(device), y.to(device)
             y_pred = model(x)
-            total_loss += loss_fn(y_pred, y).item() * x.size(0)
+
+            # Accumulate Huber loss
+            total_huber += huber_fn(y_pred, y).item() * x.size(0)
+
+            # Store predictions for MAE calculation
             preds.append(y_pred.cpu().numpy())
             targets.append(y.cpu().numpy())
 
-    total_loss /= len(loader.dataset)
+    # ----- Compute averages -----
+    total_huber /= len(loader.dataset)
     preds = np.concatenate(preds).flatten()
     targets = np.concatenate(targets).flatten()
 
-    print(f"{model_class.__name__}: mean test loss = {total_loss:.5f}")
-    return preds, targets
+    mae = np.mean(np.abs(preds - targets))
+
+    print(f"{model_class.__name__}: Huber = {total_huber:.5f}, MAE = {mae:.5f} radians")
+    return mae, total_huber
 
 
 if __name__ == "__main__":
-    # Example test dataset
-    test_csv = "dataset/rain_test_20251001/labels.csv"
+    # Path to your test CSV (e.g., fog, rain, or clear)
+    test_csv = "dataset/test_fog_20251001/labels.csv"
 
     models_to_test = [
         (PilotNet, "pilotnet_best.pt"),
         (PilotNetSwish, "pilotnet_swish_best.pt"),
-        (ResNetPilot, "resnetpilot_best.pt"),
-        (VGGPilot, "vggpilot_best.pt"),
+        (ResNetPilot, "resnet_pilot_best.pt"),
+        (VGGPilot, "vgg_pilot_best.pt"),
     ]
 
+    # ----- Evaluate each model -----
+    mae_results = {}
     for model_class, weight_path in models_to_test:
-        evaluate_model(model_class, weight_path, test_csv)
+        mae, _ = evaluate_model(model_class, weight_path, test_csv)
+        mae_results[model_class.__name__] = mae
+
+    # ----- Plot MAE results -----
+    names = list(mae_results.keys())
+    values = list(mae_results.values())
+
+    plt.figure(figsize=(7, 5))
+    plt.bar(names, values, color='skyblue')
+    plt.ylabel("Mean Absolute Error (radians)")
+    plt.title("Open-loop Evaluation: MAE across CNN Architectures")
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.show()
