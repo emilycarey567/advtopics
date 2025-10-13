@@ -29,12 +29,11 @@ def plot_loss_curves(train_curve, val_curve, name):
     plt.close()
     print(f"[{name}] 📉 Saved loss curve to plots/{name}_loss_curve.png")
 
-
 # ============================================================
 # Training function with mixed precision + early stopping
 # ============================================================
 def train_and_save(model_class, name, train_loader, val_loader, device,
-                   epochs=50, lr=1e-3, patience=5, delta=0.001):
+                   epochs=50, lr=1e-3, patience=15, delta=1e-5):
     print(f"\n🚀 Training {name} on device: {device}")
     model = model_class().to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
@@ -53,7 +52,7 @@ def train_and_save(model_class, name, train_loader, val_loader, device,
         for x, y in train_loader:
             x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
             opt.zero_grad(set_to_none=True)
-            with autocast():                     # mixed precision forward pass
+            with autocast():  # mixed precision forward pass
                 preds = model(x)
                 loss = loss_fn(preds, y)
             scaler.scale(loss).backward()
@@ -93,15 +92,10 @@ def train_and_save(model_class, name, train_loader, val_loader, device,
     plot_loss_curves(train_curve, val_curve, name)
     print(f"[{name}] ✅ Finished. Best val loss = {best_val:.5f} @ epoch {best_epoch}")
     return train_curve, val_curve
-
-
-# ============================================================
-# Main
-# ============================================================
-def main():
+if __name__ == "__main__":
     root = "dataset"
     csv_path = "dataset/clear_20250921_194106/labels.csv"  # update as needed
-    batch_size, epochs, lr = 256, 5, 1e-3
+    batch_size, epochs, lr = 256, 50, 1e-3
     max_angle_rad = 0.6
 
     ds = PilotNetDataset(root, csv_path,
@@ -132,7 +126,3 @@ def main():
 
     for model_class, name in models:
         train_and_save(model_class, name, train_loader, val_loader, device, epochs, lr)
-
-
-if __name__ == "__main__":
-    main()
