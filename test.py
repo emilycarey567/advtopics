@@ -9,12 +9,12 @@ import matplotlib.pyplot as plt
 def evaluate_model(model_class, weight_path, test_csv, root="dataset", batch_size=64):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # ----- Load model -----
+
     model = model_class().to(device)
     model.load_state_dict(torch.load(weight_path, map_location=device))
     model.eval()
 
-    # ----- Load dataset -----
+
     ds = PilotNetDataset(root, test_csv,
                          max_angle_rad=0.6,
                          crop=(20, 8, 0, 0),
@@ -22,7 +22,7 @@ def evaluate_model(model_class, weight_path, test_csv, root="dataset", batch_siz
                          augment=False)
     loader = DataLoader(ds, batch_size=batch_size, shuffle=False)
 
-    # ----- Metrics -----
+
     huber_fn = torch.nn.HuberLoss(delta=1.0)
     total_huber = 0
     preds, targets = [], []
@@ -32,14 +32,14 @@ def evaluate_model(model_class, weight_path, test_csv, root="dataset", batch_siz
             x, y = x.to(device), y.to(device)
             y_pred = model(x)
 
-            # Accumulate Huber loss
+      
             total_huber += huber_fn(y_pred, y).item() * x.size(0)
 
-            # Store predictions for MAE calculation
+            
             preds.append(y_pred.cpu().numpy())
             targets.append(y.cpu().numpy())
 
-    # ----- Compute averages -----
+
     total_huber /= len(loader.dataset)
     preds = np.concatenate(preds).flatten()
     targets = np.concatenate(targets).flatten()
@@ -51,7 +51,7 @@ def evaluate_model(model_class, weight_path, test_csv, root="dataset", batch_siz
 
 
 if __name__ == "__main__":
-    # Path to your test CSV (e.g., fog, rain, or clear)
+
     test_csv = "dataset/test_fog_20251001/labels.csv"
 
     models_to_test = [
@@ -61,13 +61,13 @@ if __name__ == "__main__":
         (VGGPilot, "vgg_pilot_best.pt"),
     ]
 
-    # ----- Evaluate each model -----
+
     mae_results = {}
     for model_class, weight_path in models_to_test:
         mae, _ = evaluate_model(model_class, weight_path, test_csv)
         mae_results[model_class.__name__] = mae
 
-    # ----- Plot MAE results -----
+    # Plot MAE results 
     names = list(mae_results.keys())
     values = list(mae_results.values())
 
