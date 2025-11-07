@@ -2,12 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# ============================================================
-# 1. PILOTNET (Baseline)
-# ------------------------------------------------------------
-# Implements the NVIDIA PilotNet architecture (Bojarski et al., 2016)
-# 5 convolutional layers (no pooling, strided convs) + fully connected head.
-# ============================================================
+
 class PilotNet(nn.Module):
     def __init__(self):
         super().__init__()
@@ -40,11 +35,7 @@ class PilotNet(nn.Module):
         return self.out(x)
 
 
-# ============================================================
-# 2. PILOTNET + SWISH ACTIVATION
-# ------------------------------------------------------------
-# Same as PilotNet but uses Swish activation (x * sigmoid(x)).
-# ============================================================
+
 class PilotNetSwish(nn.Module):
     def __init__(self):
         super().__init__()
@@ -79,12 +70,7 @@ class PilotNetSwish(nn.Module):
         return self.out(x)
 
 
-# ============================================================
-# 3. RESNET-PILOT (Dynamic)
-# ------------------------------------------------------------
-# Compact ResNet variant for behavioural cloning.
-# Dynamically builds the FC layers based on actual feature map size.
-# ============================================================
+
 class BasicBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
         super().__init__()
@@ -114,7 +100,7 @@ class ResNetPilot(nn.Module):
     """
     def __init__(self):
         super().__init__()
-        print("[ResNetPilot] ✅ Loaded dynamic version (will infer flatten size automatically)")
+        print("[ResNetPilot] Loaded dynamic version (will infer flatten size automatically)")
 
         self.conv1 = nn.Conv2d(3, 32, 5, stride=2, padding=2)
         self.bn1 = nn.BatchNorm2d(32)
@@ -149,11 +135,7 @@ class ResNetPilot(nn.Module):
         return self.fc_layers(x)
 
 
-# ============================================================
-# 4. VGG-PILOT (Dynamic)
-# ------------------------------------------------------------
-# VGG-style CNN that infers the correct FC input size automatically.
-# ============================================================
+
 class VGGPilot(nn.Module):
     """
     Compact VGG-style network for behavioural cloning.
@@ -162,7 +144,7 @@ class VGGPilot(nn.Module):
     def __init__(self):
         super().__init__()
 
-        print("[VGGPilot] ✅ Loaded dynamic version (will infer flatten size automatically)")
+        print("[VGGPilot] Loaded dynamic version (will infer flatten size automatically)")
 
         self.features = nn.Sequential(
             # Block 1
@@ -186,7 +168,7 @@ class VGGPilot(nn.Module):
             nn.MaxPool2d(2, 2),
         )
 
-        # Classifier will be created dynamically on first forward()
+     
         self.classifier = None
 
     def forward(self, x):
