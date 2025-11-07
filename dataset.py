@@ -21,7 +21,7 @@ class PilotNetDataset(Dataset):
 
         with open(csv_path, newline="") as f:
             for row in csv.DictReader(f):
-                img = row["image"]  # e.g. "images/img_000000.png"
+                img = row["image"]  
                 angle = float(row.get("steer_rad", 0.0))
                 if self.max_angle:
                     angle /= self.max_angle
@@ -41,14 +41,7 @@ class PilotNetDataset(Dataset):
             W,H = pil.size
             pil = pil.crop((l,t,W-r,H-b))
 
-        # Augmentations
-        if self.augment:
-            if random.random() < 0.5:
-                factor = 0.5 + random.random()
-                pil = ImageEnhance.Brightness(pil).enhance(factor)
-            if random.random() < 0.5:
-                pil = pil.transpose(Image.FLIP_LEFT_RIGHT)
-                y = -y
+      
 
         # Resize to (66,200)
         pil = pil.resize((self.resize[1], self.resize[0]), Image.BILINEAR)
