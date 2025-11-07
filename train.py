@@ -6,14 +6,10 @@ import matplotlib.pyplot as plt
 import os
 from torch.cuda.amp import autocast, GradScaler
 
-# ============================================================
-# Global speed settings
-# ============================================================
+
 torch.backends.cudnn.benchmark = True  # optimise conv kernels for fixed input size
 
-# ============================================================
-# Plotting helper
-# ============================================================
+
 def plot_loss_curves(train_curve, val_curve, name):
     plt.figure()
     plt.plot(train_curve, label="Training Loss")
@@ -29,9 +25,7 @@ def plot_loss_curves(train_curve, val_curve, name):
     plt.close()
     print(f"[{name}] 📉 Saved loss curve to plots/{name}_loss_curve.png")
 
-# ============================================================
-# Training function with mixed precision + early stopping
-# ============================================================
+
 def train_and_save(model_class, name, train_loader, val_loader, device,
                    epochs=50, lr=1e-3, patience=15, delta=1e-5):
     print(f"\n🚀 Training {name} on device: {device}")
@@ -61,7 +55,7 @@ def train_and_save(model_class, name, train_loader, val_loader, device,
             train_loss += loss.item() * x.size(0)
         train_loss /= len(train_loader.dataset)
 
-        # ---- Validation ----
+ 
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
@@ -76,7 +70,7 @@ def train_and_save(model_class, name, train_loader, val_loader, device,
 
         print(f"[{name}] Epoch {epoch:02d} | train {train_loss:.5f} | val {val_loss:.5f}")
 
-        # ---- Early stopping ----
+     
         if best_val - val_loss > delta:
             best_val = val_loss
             best_epoch = epoch
@@ -90,11 +84,11 @@ def train_and_save(model_class, name, train_loader, val_loader, device,
 
     # ---- Save plot ----
     plot_loss_curves(train_curve, val_curve, name)
-    print(f"[{name}] ✅ Finished. Best val loss = {best_val:.5f} @ epoch {best_epoch}")
+    print(f"[{name}] Finished. Best val loss = {best_val:.5f} @ epoch {best_epoch}")
     return train_curve, val_curve
 if __name__ == "__main__":
     root = "dataset"
-    csv_path = "dataset/clear_20250921_194106/labels.csv"  # update as needed
+    csv_path = "dataset/clear_20250921_194106/labels.csv" 
     batch_size, epochs, lr = 256, 50, 1e-3
     max_angle_rad = 0.6
 
